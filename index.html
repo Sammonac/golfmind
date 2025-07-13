@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GolfMind - Golf Performance Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* CSS Variables for Golf Theme */
+        :root {
+            --golf-forest-green: #2E7D32;
+            --golf-warm-gold: #FF8F00;
+            --golf-sage-green: #8BC34A;
+            --golf-cream: #F9F7F4;
+            --golf-sand: #F5F1E8;
+            --golf-charcoal: #424242;
+            --golf-light-gray: #E8F5E8;
+            --golf-accent-red: #D32F2F;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--golf-charcoal);
+            background: linear-gradient(135deg, var(--golf-cream), var(--golf-sand));
+            min-height: 100vh;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, var(--golf-forest-green), var(--golf-sage-green));
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .app-header h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .tab-navigation {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 600;
+            min-width: 100px;
+        }
+
+        .tab-btn:hover,
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+        }
+
+        .app-main {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Round Entry Screen */
+        .round-entry {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .round-entry h2 {
+            color: var(--golf-forest-green);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--golf-forest-green);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .form-group input[type="text"], 
+        .form-group input[type="number"],
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--golf-light-gray);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--golf-forest-green);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: var(--golf-light-gray);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--golf-forest-green);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(46, 125, 50, 0.3);
+        }
+
+        .slider-value {
+            font-weight: 600;
+            color: var(--golf-forest-green);
+            font-size: 1.1rem;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .category-description {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--golf-warm-gold), #FFB74D);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 143, 0, 0.3);
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 143, 0, 0.4);
+        }
+
+        /* History Screen */
+        .history-screen h2 {
+            color: var(--golf-forest-green);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .round-item {
+            background: var(--golf-light-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .round-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: var(--golf-forest-green);
+        }
+
+        .round-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .round-course {
+            font-weight: 600;
+            color: var(--golf-forest-green);
+            font-size: 1.1rem;
+        }
+
+        .round-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .round-scores {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .golf-score {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--golf-charcoal);
+        }
+
+        .mindset-score {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--golf-warm-gold);
+        }
+
+        .round-details {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #ddd;
+        }
+
+        .round-details.expanded {
+            display: block;
+        }
+
+        .category-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .category-item {
+            text-align: center;
+            background: white;
+            padding: 0.75rem;
+            border-radius: 6px;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: var(--golf-forest-green);
+            margin-bottom: 0.25rem;
+        }
+
+        .category-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--golf-charcoal);
+        }
+
+        .round-notes {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+
+        .round-notes h4 {
+            color: var(--golf-forest-green);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Trends Dashboard */
+        .dashboard-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: 1fr;
+        }
+
+        .chart-container {
+            background: var(--golf-light-gray);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            height: 350px;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--golf-forest-green);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--golf-forest-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--golf-charcoal);
+        }
+
+        .stat-subtitle {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+
+        /* Responsive Design */
+        @media (min-width: 768px) {
+            .app-container {
+                padding: 2rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .app-container {
+                padding: 3rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Success Message */
+        .success-message {
+            background: #4CAF50;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>GolfMind</h1>
+            <nav class="tab-navigation">
+                <button class="tab-btn active" data-tab="entry">Round Entry</button>
+                <button class="tab-btn" data-tab="history">History</button>
+                <button class="tab-btn" data-tab="trends">Trends</button>
+            </nav>
+        </header>
+
+        <main class="app-main">
+            <div class="success-message" id="successMessage"></div>
+
+            <!-- Round Entry Screen -->
+            <section id="entry" class="tab-content active">
+                <div class="round-entry">
+                    <h2>Record Your Round</h2>
+                    <form id="roundForm">
+                        <div class="form-group">
+                            <label for="courseName">Course Name</label>
+                            <input type="text" id="courseName" placeholder="e.g., Pebble Beach Golf Links" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="golfScore">Golf Score</label>
+                            <input type="number" id="golfScore" placeholder="e.g., 85" min="60" max="150" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="physical">Physical (P) - Nutrition, Rest, Warm-up</label>
+                            <div class="slider-container">
+                                <input type="range" id="physical" min="1" max="10" value="5">
+                                <span class="slider-value">5</span>
+                            </div>
+                            <div class="category-description">How well did you prepare physically?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="technical">Technical (T) - Swing, Grip, Aim, Shot Execution</label>
+                            <div class="slider-container">
+                                <input type="range" id="technical" min="1" max="10" value="5">
+                                <span class="slider-value">5</span>
+                            </div>
+                            <div class="category-description">How was your technical execution?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mental">Mental (M) - Focus, Decision-making, Self-talk</label>
+                            <div class="slider-container">
+                                <input type="range" id="mental" min="1" max="10" value="5">
+                                <span class="slider-value">5</span>
+                            </div>
+                            <div class="category-description">How well did you stay mentally sharp?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="emotional">Emotional (E) - Handling Emotions</label>
+                            <div class="slider-container">
+                                <input type="range" id="emotional" min="1" max="10" value="5">
+                                <span class="slider-value">5</span>
+                            </div>
+                            <div class="category-description">How well did you manage your emotions?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="social">Social (S) - Interactions with Group/Caddy/Others</label>
+                            <div class="slider-container">
+                                <input type="range" id="social" min="1" max="10" value="5">
+                                <span class="slider-value">5</span>
+                            </div>
+                            <div class="category-description">How were your social interactions?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes">Reflection Notes</label>
+                            <textarea id="notes" rows="4" placeholder="What went well? What could be improved? Key insights from this round..."></textarea>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Save Round</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- History Screen -->
+            <section id="history" class="tab-content">
+                <div class="history-screen">
+                    <h2>Round History</h2>
+                    <div id="roundsList">
+                        <!-- Rounds will be populated here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trends Dashboard -->
+            <section id="trends" class="tab-content">
+                <div class="trends-dashboard">
+                    <h2>Performance Trends</h2>
+                    <div class="stats-grid" id="statsGrid">
+                        <!-- Stats will be populated here -->
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="chart-container">
+                            <div class="chart-title">Category Trends Over Time</div>
+                            <canvas id="trendsChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Latest Round Breakdown</div>
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // GolfMind App Class
+        class GolfMindApp {
+            constructor() {
+                this.storageKey = 'golfmind_rounds';
+                this.currentTab = 'entry';
+                this.rounds = this.loadRounds();
+                this.charts = {};
+                this.init();
+            }
+
+            init() {
+                this.setupTabNavigation();
+                this.setupForm();
+                this.setupSliders();
+                this.renderHistory();
+                this.renderTrends();
+            }
+
+            // Load rounds from localStorage
+            loadRounds() {
+                try {
+                    const stored = localStorage.getItem(this.storageKey);
+                    return stored ? JSON.parse(stored) : [];
+                } catch (error) {
+                    console.error('Error loading rounds:', error);
+                    return [];
+                }
+            }
+
+            // Save rounds to localStorage
+            saveRounds() {
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.rounds));
+                    return true;
+                } catch (error) {
+                    console.error('Error saving rounds:', error);
+                    return false;
+                }
+            }
+
+            // Setup tab navigation
+            setupTabNavigation() {
+                const tabBtns = document.querySelectorAll('.tab-btn');
+                const tabContents = document.querySelectorAll('.tab-content');
+
+                tabBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const targetTab = e.target.dataset.tab;
+                        
+                        // Remove active classes
+                        tabBtns.forEach(b => b.classList.remove('active'));
+                        tabContents.forEach(c => c.classList.remove('active'));
+                        
+                        // Add active classes
+                        e.target.classList.add('active');
+                        document.getElementById(targetTab).classList.add('active');
+                        
+                        this.currentTab = targetTab;
+                        
+                        // Refresh content when switching tabs
+                        if (targetTab === 'history') {
+                            this.renderHistory();
+                        } else if (targetTab === 'trends') {
+                            this.renderTrends();
+                        }
+                    });
+                });
+            }
+
+            // Setup form submission
+            setupForm() {
+                const form = document.getElementById('roundForm');
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveRound();
+                });
+            }
+
+            // Setup slider value updates
+            setupSliders() {
+                const sliders = document.querySelectorAll('input[type="range"]');
+                sliders.forEach(slider => {
+                    slider.addEventListener('input', (e) => {
+                        const valueSpan = e.target.parentNode.querySelector('.slider-value');
+                        valueSpan.textContent = e.target.value;
+                    });
+                });
+            }
+
+            // Save a new round
+            saveRound() {
+                const formData = {
+                    id: Date.now(),
+                    date: new Date().toISOString().split('T')[0],
+                    courseName: document.getElementById('courseName').value,
+                    golfScore: parseInt(document.getElementById('golfScore').value),
+                    categories: {
+                        physical: parseInt(document.getElementById('physical').value),
+                        technical: parseInt(document.getElementById('technical').value),
+                        mental: parseInt(document.getElementById('mental').value),
+                        emotional: parseInt(document.getElementById('emotional').value),
+                        social: parseInt(document.getElementById('social').value)
+                    },
+                    notes: document.getElementById('notes').value,
+                    createdAt: new Date().toISOString()
+                };
+
+                // Calculate total mindset score
+                formData.mindsetScore = Object.values(formData.categories).reduce((sum, val) => sum + val, 0);
+
+                this.rounds.unshift(formData);
+                this.saveRounds();
+                
+                // Reset form
+                document.getElementById('roundForm').reset();
+                document.querySelectorAll('.slider-value').forEach(span => span.textContent = '5');
+                
+                // Show success message
+                this.showSuccessMessage('Round saved successfully!');
+                
+                // Update displays
+                this.renderHistory();
+                this.renderTrends();
+            }
+
+            // Show success message
+            showSuccessMessage(message) {
+                const successEl = document.getElementById('successMessage');
+                successEl.textContent = message;
+                successEl.classList.add('show');
+                setTimeout(() => {
+                    successEl.classList.remove('show');
+                }, 3000);
+            }
+
+            // Render history screen
+            renderHistory() {
+                const roundsList = document.getElementById('roundsList');
+                
+                if (this.rounds.length === 0) {
+                    roundsList.innerHTML = '<div class="no-data">No rounds recorded yet. Start by entering your first round!</div>';
+                    return;
+                }
+
+                const roundsHTML = this.rounds.map(round => `
+                    <div class="round-item" onclick="app.toggleRoundDetails(${round.id})">
+                        <div class="round-header">
+                            <div class="round-course">${round.courseName}</div>
+                            <div class="round-date">${new Date(round.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="round-scores">
+                            <div class="golf-score">Score: ${round.golfScore}</div>
+                            <div class="mindset-score">Mindset: ${round.mindsetScore}/50</div>
+                        </div>
+                        <div class="round-details" id="details-${round.id}">
+                            <div class="category-breakdown">
+                                <div class="category-item">
+                                    <div class="category-name">Physical</div>
+                                    <div class="category-value">${round.categories.physical}/10</div>
+                                </div>
+                                <div class="category-item">
+                                    <div class="category-name">Technical</div>
+                                    <div class="category-value">${round.categories.technical}/10</div>
+                                </div>
+                                <div class="category-item">
+                                    <div class="category-name">Mental</div>
+                                    <div class="category-value">${round.categories.mental}/10</div>
+                                </div>
+                                <div class="category-item">
+                                    <div class="category-name">Emotional</div>
+                                    <div class="category-value">${round.categories.emotional}/10</div>
+                                </div>
+                                <div class="category-item">
+                                    <div class="category-name">Social</div>
+                                    <div class="category-value">${round.categories.social}/10</div>
+                                </div>
+                            </div>
+                            ${round.notes ? `
+                                <div class="round-notes">
+                                    <h4>Notes:</h4>
+                                    <p>${round.notes}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+
+                roundsList.innerHTML = roundsHTML;
+            }
+
+            // Toggle round details
+            toggleRoundDetails(roundId) {
+                const details = document.getElementById(`details-${roundId}`);
+                details.classList.toggle('expanded');
+            }
+
+            // Render trends dashboard
+            renderTrends() {
+                this.renderStats();
+                this.renderCharts();
+            }
+
+            // Render statistics
+            renderStats() {
+                const statsGrid = document.getElementById('statsGrid');
+                
+                if (this.rounds.length === 0) {
+                    statsGrid.innerHTML = '<div class="no-data">No data available for trends analysis.</div>';
+                    return;
+                }
+
+                const totalRounds = this.rounds.length;
+                const bestScore = Math.min(...this.rounds.map(r => r.golfScore));
+                const avgMindset = Math.round(this.rounds.reduce((sum, r) => sum + r.mindsetScore, 0) / totalRounds);
+                
+                // Find lowest average category
+                const categoryAverages = {
+                    physical: this.rounds.reduce((sum, r) => sum + r.categories.physical, 0) / totalRounds,
+                    technical: this.rounds.reduce((sum, r) => sum + r.categories.technical, 0) / totalRounds,
+                    mental: this.rounds.reduce((sum, r) => sum + r.categories.mental, 0) / totalRounds,
+                    emotional: this.rounds.reduce((sum, r) => sum + r.categories.emotional, 0) / totalRounds,
+                    social: this.rounds.reduce((sum, r) => sum + r.categories.social, 0) / totalRounds
+                };
+
+                const lowestCategory = Object.keys(categoryAverages).reduce((a, b) => 
+                    categoryAverages[a] < categoryAverages[b] ? a : b
+                );
+
+                const categoryNames = {
+                    physical: 'Physical',
+                    technical: 'Technical',
+                    mental: 'Mental',
+                    emotional: 'Emotional',
+                    social: 'Social'
+                };
+
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-title">Total Rounds</div>
+                        <div class="stat-value">${totalRounds}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Best Score</div>
+                        <div class="stat-value">${bestScore}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Avg Mindset</div>
+                        <div class="stat-value">${avgMindset}</div>
+                        <div class="stat-subtitle">out of 50</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Focus Area</div>
+                        <div class="stat-value">${categoryNames[lowestCategory]}</div>
+                        <div class="stat-subtitle">Lowest avg: ${Math.round(categoryAverages[lowestCategory] * 10) / 10}</div>
+                    </div>
+                `;
+            }
+
+            // Render charts
+            renderCharts() {
+                if (this.rounds.length === 0) return;
+
+                // Destroy existing charts
+                Object.values(this.charts).forEach(chart => chart.destroy());
+                this.charts = {};
+
+                this.renderTrendsChart();
+                this.renderRadarChart();
+            }
+
+            // Render trends line chart
+            renderTrendsChart() {
+                const ctx = document.getElementById('trendsChart').getContext('2d');
+                
+                const last10Rounds = this.rounds.slice(0, 10).reverse();
+                const labels = last10Rounds.map((_, index) => `Round ${index + 1}`);
+                
+                const datasets = [
+                    {
+                        label: 'Physical',
+                        data: last10Rounds.map(r => r.categories.physical),
+                        borderColor: '#2E7D32',
+                        backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Technical',
+                        data: last10Rounds.map(r => r.categories.technical),
+                        borderColor: '#FF8F00',
+                        backgroundColor: 'rgba(255, 143, 0, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Mental',
+                        data: last10Rounds.map(r => r.categories.mental),
+                        borderColor: '#1976D2',
+                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Emotional',
+                        data: last10Rounds.map(r => r.categories.emotional),
+                        borderColor: '#8BC34A',
+                        backgroundColor: 'rgba(139, 195, 74, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Social',
+                        data: last10Rounds.map(r => r.categories.social),
+                        borderColor: '#FF5722',
+                        backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                        tension: 0.4
+                    }
+                ];
+
+                this.charts.trends = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                grid: { color: '#E8F5E8' }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Render radar chart
+            renderRadarChart() {
+                const ctx = document.getElementById('radarChart').getContext('2d');
+                
+                const latestRound = this.rounds[0];
+                if (!latestRound) return;
+
+                const data = {
+                    labels: ['Physical', 'Technical', 'Mental', 'Emotional', 'Social'],
+                    datasets: [{
+                        label: 'Latest Round',
+                        data: [
+                            latestRound.categories.physical,
+                            latestRound.categories.technical,
+                            latestRound.categories.mental,
+                            latestRound.categories.emotional,
+                            latestRound.categories.social
+                        ],
+                        backgroundColor: 'rgba(46, 125, 50, 0.2)',
+                        borderColor: '#2E7D32',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#2E7D32',
+                        pointBorderColor: '#fff',
+                        pointRadius: 6
+                    }]
+                };
+
+                this.charts.radar = new Chart(ctx, {
+                    type: 'radar',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 10,
+                                grid: { color: '#E8F5E8' },
+                                pointLabels: {
+                                    font: { size: 12 }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize the app
+        const app = new GolfMindApp();
+    </script>
+</body>
+</html>
